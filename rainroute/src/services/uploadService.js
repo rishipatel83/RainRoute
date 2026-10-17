@@ -3,11 +3,14 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { Alert } from 'react-native';
 import { CLOUDINARY_CONFIG } from '../config/cloudinary';
 
-export const openCameraAndGetBase64 = async () => {
+/**
+ * Captures a photo and returns both preview URI and base64 string for upload
+ */
+export const captureHazardPhoto = async () => {
   try {
     const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
     if (!cameraPerm.granted) {
-      Alert.alert('Permission Required', 'Camera access is needed to capture flood evidence.');
+      Alert.alert('Permission Required', 'Camera access is needed to capture hazard evidence.');
       return null;
     }
 
@@ -20,19 +23,34 @@ export const openCameraAndGetBase64 = async () => {
       return null;
     }
 
+    const uri = result.assets[0].uri;
     const manipulatedImage = await ImageManipulator.manipulateAsync(
-      result.assets[0].uri,
+      uri,
       [{ resize: { width: 800 } }], 
       { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
     );
 
-    return `data:image/jpeg;base64,${manipulatedImage.base64}`;
+    return {
+      uri: manipulatedImage.uri,
+      base64: `data:image/jpeg;base64,${manipulatedImage.base64}`,
+    };
   } catch (error) {
     console.warn('⚠️ Camera capture error:', error);
     return null;
   }
 };
 
+/**
+ * Backward compatible single base64 capture
+ */
+export const openCameraAndGetBase64 = async () => {
+  const photo = await captureHazardPhoto();
+  return photo ? photo.base64 : null;
+};
+
+/**
+ * Upload base64 encoded photo to Cloudinary CDN
+ */
 export const uploadToCloudinary = async (base64Img) => {
   try {
     const payload = { file: base64Img, upload_preset: CLOUDINARY_CONFIG.UPLOAD_PRESET };

@@ -5,6 +5,8 @@ const cors = require('cors');
 
 const connectDB = require('./src/config/db');
 const reportRoutes = require('./src/routes/reportRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const feedbackRoutes = require('./src/routes/feedbackRoutes');
 const requestLogger = require('./src/middleware/logger');
 const { notFoundHandler, globalErrorHandler } = require('./src/middleware/errorHandler');
 
@@ -29,7 +31,9 @@ app.get('/health', (req, res) => {
 });
 
 // 4. Mount Application Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // 5. Error Handlers
 app.use(notFoundHandler);
@@ -41,6 +45,9 @@ const PORT = process.env.PORT || 3000;
 connectDB().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 RainRoute Server running on port ${PORT} (0.0.0.0)`);
-    console.log(`📡 Endpoints: POST/GET http://0.0.0.0:${PORT}/api/reports`);
+    console.log(`📡 Endpoints:`);
+    console.log(`   - Auth:     POST http://0.0.0.0:${PORT}/api/auth/login`);
+    console.log(`   - Reports:  GET/POST http://0.0.0.0:${PORT}/api/reports`);
+    console.log(`   - Feedback: POST http://0.0.0.0:${PORT}/api/feedback`);
   });
 });

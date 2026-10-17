@@ -1,16 +1,24 @@
 // src/services/apiService.js
 
-// Default backend server URL for local network testing
-export const DEFAULT_SERVER_URL = 'http://10.253.158.42:3000/api/reports';
-let activeServerUrl = DEFAULT_SERVER_URL;
+// Default backend server base URL for local network testing
+export const DEFAULT_BASE_API_URL = 'http://10.253.158.42:3000/api';
+let activeBaseUrl = DEFAULT_BASE_API_URL;
 
 export const setServerUrl = (url) => {
   if (url && typeof url === 'string') {
-    activeServerUrl = url.trim();
+    let clean = url.trim().replace(/\/+$/, '');
+    if (clean.endsWith('/reports')) {
+      clean = clean.replace(/\/reports$/, '');
+    }
+    if (!clean.endsWith('/api') && !clean.includes('/api/')) {
+      clean = `${clean}/api`;
+    }
+    activeBaseUrl = clean;
   }
 };
 
-export const getServerUrl = () => activeServerUrl;
+export const getServerUrl = () => `${activeBaseUrl}/reports`;
+export const getBaseApiUrl = () => activeBaseUrl;
 
 // Helper to perform fetch with a timeout
 const fetchWithTimeout = async (url, options = {}, timeoutMs = 7000) => {
@@ -32,16 +40,27 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 7000) => {
 // In-memory cache for routing to avoid redundant network requests
 const routeCache = new Map();
 
-export const saveReportToDatabase = async (latitude, longitude, imageUrl) => {
+/**
+ * Public: Save a new hazard report
+ */
+export const saveReportToDatabase = async (latitude, longitude, imageUrl, hazardData = {}) => {
   try {
     const response = await fetchWithTimeout(
-      activeServerUrl,
+      `${activeBaseUrl}/reports`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ latitude, longitude, imageUrl }),
+        body: JSON.stringify({
+          latitude,
+          longitude,
+          imageUrl,
+          hazardType: hazardData.hazardType || 'waterlogging',
+          title: hazardData.title || '',
+          description: hazardData.description || '',
+          severity: hazardData.severity || 'medium',
+        }),
       },
       8000
     );
@@ -58,9 +77,12 @@ export const saveReportToDatabase = async (latitude, longitude, imageUrl) => {
   }
 };
 
+/**
+ * Public: Fetch active hazards
+ */
 export const fetchActiveReports = async () => {
   try {
-    const response = await fetchWithTimeout(activeServerUrl, {}, 5000);
+    const response = await fetchWithTimeout(`${activeBaseUrl}/reports`, {}, 5000);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -72,6 +94,143 @@ export const fetchActiveReports = async () => {
   }
 };
 
+/**
+ * Admin: Authenticate with username/password
+ */
+export const adminLogin = async (username, password) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/auth/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      },
+      7000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Authentication failed');
+    }
+    return data; // { success: true, token, admin }
+  } catch (error) {
+    console.warn('⚠️ Admin Login Failed:', error.message || error);
+    throw error;
+  }
+};
+
+/**
+ * Admin: Mark a hazard as resolved or update status
+ */
+export const updateReportStatus = async (reportId, status, token) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/reports/${reportId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      },
+      7000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Status update failed');
+    }
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Update Status Failed:', error.message || error);
+    throw error;
+  }
+};
+
+/**
+ * Admin: Delete a hazard report permanently
+ */
+export const deleteReport = async (reportId, token) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/reports/${reportId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      7000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Delete failed');
+    }
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Delete Report Failed:', error.message || error);
+    throw error;
+  }
+};
+
+/**
+ * Admin: Fetch all reports including resolved
+ */
+export const fetchAdminReports = async (token) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/reports/all`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      7000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch admin reports');
+    }
+    return data.reports || [];
+  } catch (error) {
+    console.warn('⚠️ Fetch Admin Reports Failed:', error.message || error);
+    return [];
+  }
+};
+
+/**
+ * Public: Submit user feedback
+ */
+export const submitFeedback = async ({ rating, category, message, contactEmail }) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/feedback`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, category, message, contactEmail }),
+      },
+      7000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Feedback submission failed');
+    }
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Submit Feedback Failed:', error.message || error);
+    throw error;
+  }
+};
+
+/**
+ * Routing via OSRM
+ */
 export const getRouteFromOSRM = async (startLat, startLng, destLat, destLng) => {
   try {
     const cacheKey = `${startLat.toFixed(4)},${startLng.toFixed(4)}_${destLat.toFixed(4)},${destLng.toFixed(4)}`;
@@ -79,7 +238,6 @@ export const getRouteFromOSRM = async (startLat, startLng, destLat, destLng) => 
       return routeCache.get(cacheKey);
     }
 
-    // Request full route with alternative route options from OSRM
     const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson&alternatives=true`;
     const response = await fetchWithTimeout(url, {}, 8000);
     const data = await response.json();
@@ -114,16 +272,14 @@ export const getRouteFromOSRM = async (startLat, startLng, destLat, destLng) => 
 };
 
 /**
- * Calculates a detour route bypassing a specific flood hazard cluster
+ * Calculates a detour route bypassing a specific hazard cluster
  */
 export const getDetourRoute = async (startLat, startLng, destLat, destLng, hazardLat, hazardLng) => {
   try {
-    // Calculate a perpendicular offset waypoint (~450 meters away from the flood spot)
     const dLat = destLat - startLat;
     const dLng = destLng - startLng;
     const len = Math.sqrt(dLat * dLat + dLng * dLng) || 1;
-    // Perpendicular vector (-dLng, dLat)
-    const offsetMagnitude = 0.005; // ~500 meters in degrees
+    const offsetMagnitude = 0.005; // ~500 meters
     const detourLat = hazardLat - (dLng / len) * offsetMagnitude;
     const detourLng = hazardLng + (dLat / len) * offsetMagnitude;
 
@@ -147,21 +303,22 @@ export const getDetourRoute = async (startLat, startLng, destLat, destLng, hazar
   }
 };
 
+/**
+ * Geocoding via Nominatim OpenStreetMap
+ */
 export const searchLocation = async (query, userCoords = null) => {
   try {
     if (!query || !query.trim()) return [];
 
     let cleanQuery = query.trim();
-    // If no city specified in query, prioritize around current location or Indore
     let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery)}&limit=6&addressdetails=1`;
     
     if (userCoords && userCoords.lat && userCoords.lng) {
-      const delta = 0.5; // ~55km bounding box around user
+      const delta = 0.5;
       const viewbox = `${userCoords.lng - delta},${userCoords.lat + delta},${userCoords.lng + delta},${userCoords.lat - delta}`;
       url += `&viewbox=${viewbox}&bounded=0`;
     } else if (!cleanQuery.toLowerCase().includes('indore') && !cleanQuery.includes(',')) {
-      // Default convenience fallback
-      url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Indore')}&limit=6&addressdetails=1`;
+      url += `&countrycodes=in`;
     }
 
     const response = await fetchWithTimeout(

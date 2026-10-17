@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function ActionButtons({ 
   onLocationPress, 
   onReportPress, 
   onRefreshPress,
+  onSosPress,
   locationLoading, 
   reportLoading,
   hazardCount = 0,
@@ -24,7 +25,7 @@ export default function ActionButtons({
         style={[styles.reportFab, reportLoading && styles.disabledFab]} 
         onPress={onReportPress} 
         disabled={reportLoading}
-        activeOpacity={0.82}
+        activeOpacity={0.85}
       >
         {reportLoading ? (
           <View style={styles.loadingRow}>
@@ -34,18 +35,30 @@ export default function ActionButtons({
         ) : (
           <View style={styles.reportContent}>
             <View style={styles.reportIconCircle}>
-              <MaterialIcons name="report-problem" size={19} color="#ffffff" />
+              <MaterialCommunityIcons name="alert-octagon" size={20} color="#ffffff" />
             </View>
             <View>
-              <Text style={styles.reportText}>Report Flood</Text>
-              <Text style={styles.reportSubtext}>Tag waterlogging</Text>
+              <Text style={styles.reportText}>Report Hazard</Text>
+              <Text style={styles.reportSubtext}>Water, Pothole, Block</Text>
             </View>
           </View>
         )}
       </TouchableOpacity>
 
-      {/* Right Dock: Quick Tools (Refresh Hazards + GPS Recenter) */}
+      {/* Right Dock: Quick Tools (SOS, Refresh, GPS) */}
       <View style={styles.rightDock} pointerEvents="box-none">
+        {/* Quick SOS Trigger */}
+        {onSosPress && (
+          <TouchableOpacity 
+            style={[styles.iconFab, styles.sosFab]} 
+            onPress={onSosPress}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="emergency" size={22} color="#dc2626" />
+          </TouchableOpacity>
+        )}
+
+        {/* Refresh Hazards */}
         {onRefreshPress && (
           <TouchableOpacity 
             style={styles.iconFab} 
@@ -93,7 +106,7 @@ const styles = StyleSheet.create({
     bottom: 26,
   },
   containerWithRoute: {
-    bottom: 200, // Floats cleanly above the route info card!
+    bottom: 230, // Floats cleanly above the route info card
   },
   reportFab: {
     backgroundColor: '#dc2626',
@@ -127,11 +140,11 @@ const styles = StyleSheet.create({
   reportText: {
     color: '#ffffff',
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 14,
     letterSpacing: 0.2,
   },
   reportSubtext: {
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 11,
     fontWeight: '500',
   },
@@ -145,7 +158,7 @@ const styles = StyleSheet.create({
   rightDock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   iconFab: {
     backgroundColor: '#ffffff',
@@ -161,6 +174,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     borderWidth: 1,
     borderColor: '#f1f5f9',
+  },
+  sosFab: {
+    borderColor: '#fecaca',
+    backgroundColor: '#fff5f5',
   },
   locationFab: {
     width: 52,

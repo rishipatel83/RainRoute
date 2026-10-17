@@ -19,6 +19,41 @@ const reportSchema = new mongoose.Schema({
     required: [true, 'Image URL is required'],
     trim: true,
   },
+  hazardType: {
+    type: String,
+    enum: ['waterlogging', 'pothole', 'construction', 'obstacle', 'accident', 'other'],
+    default: 'waterlogging',
+    index: true,
+  },
+  title: {
+    type: String,
+    trim: true,
+    default: 'Hazard Report',
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  severity: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    default: 'medium',
+  },
+  status: {
+    type: String,
+    enum: ['active', 'investigating', 'resolved'],
+    default: 'active',
+    index: true,
+  },
+  resolvedAt: {
+    type: Date,
+    default: null,
+  },
+  resolvedBy: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -26,6 +61,9 @@ const reportSchema = new mongoose.Schema({
     expires: 21600,
   },
 });
+
+// Compound index for querying active hazards quickly
+reportSchema.index({ status: 1, createdAt: -1 });
 
 const Report = mongoose.model('Report', reportSchema);
 

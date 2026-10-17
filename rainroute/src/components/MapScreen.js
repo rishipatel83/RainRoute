@@ -10,28 +10,28 @@ const INITIAL_HTML = `
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-      * { -webkit-tap-highlight-color: transparent; }
+      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       html, body {
         padding: 0;
         margin: 0;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #f1f5f9;
+        background: #f8fafc;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
       #map { width: 100%; height: 100%; }
 
       /* Sleek Leaflet Popups */
       .leaflet-popup-content-wrapper {
-        border-radius: 16px !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25) !important;
-        padding: 4px !important;
+        border-radius: 18px !important;
+        box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.28) !important;
+        padding: 0 !important;
         background: #ffffff !important;
         overflow: hidden;
       }
       .leaflet-popup-content {
-        margin: 8px !important;
+        margin: 0 !important;
         line-height: 1.4 !important;
       }
       .leaflet-popup-tip {
@@ -73,18 +73,17 @@ const INITIAL_HTML = `
       /* Hazard Marker Ripple */
       .hazard-marker-wrapper {
         position: relative;
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .hazard-pulse-ring {
         position: absolute;
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: rgba(239, 68, 68, 0.3);
         animation: hazardPulse 1.8s ease-out infinite;
       }
       @keyframes hazardPulse {
@@ -109,13 +108,24 @@ const INITIAL_HTML = `
       var userMarker = null;
       var waterlogLayer = null;
 
+      // Bridge for admin actions from popup HTML
+      window.triggerHazardAction = function(action, reportId) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'HAZARD_ACTION',
+            action: action,
+            reportId: reportId
+          }));
+        }
+      };
+
       try {
         map = L.map('map', { 
           zoomControl: false,
           attributionControl: false 
         }).setView([22.7196, 75.8577], 14);
 
-        // 100% FREE OpenStreetMap Tiles - No API key required
+        // 100% FREE OpenStreetMap Tiles
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           subdomains: ['a','b','c']
@@ -204,7 +214,7 @@ const INITIAL_HTML = `
   </html>
 `;
 
-const MapScreen = forwardRef(({ onMapReady, onDestinationSelect, onStartSelect }, ref) => {
+const MapScreen = forwardRef(({ onMapReady, onDestinationSelect, onStartSelect, onHazardAction }, ref) => {
   return (
     <View style={styles.container}>
       <WebView
@@ -227,6 +237,8 @@ const MapScreen = forwardRef(({ onMapReady, onDestinationSelect, onStartSelect }
               onDestinationSelect(data.lat, data.lng);
             } else if (data.type === "START_SET" && onStartSelect) {
               onStartSelect(data.lat, data.lng);
+            } else if (data.type === "HAZARD_ACTION" && onHazardAction) {
+              onHazardAction(data.action, data.reportId);
             }
           } catch (e) {
             console.warn("WebView message parse error:", e);
@@ -240,7 +252,7 @@ const MapScreen = forwardRef(({ onMapReady, onDestinationSelect, onStartSelect }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
   },
   map: {
     flex: 1,
