@@ -1,293 +1,244 @@
-# 🌧️ RainRoute — Smart Monsoon Navigation & Crowdsourced Hazard Detection
+# 🌧️ RainRoute — Smart Monsoon Navigation & Hazard Detection
 
-[![React Native](https://img.shields.io/badge/React_Native-v0.76-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-SDK_52-000020?logo=expo&logoColor=white)](https://expo.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express_v4-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas_TTL_Cache-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Leaflet](https://img.shields.io/badge/Leaflet-v1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Cloudinary](https://img.shields.io/badge/Cloudinary-Media_CDN-3448C5?logo=cloudinary&logoColor=white)](https://cloudinary.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<div align="center">
 
-> **RainRoute** is a fullstack, crowd-powered mobile navigation system engineered to solve urban waterlogging and monsoon commuting hazards. It delivers real-time hazard mapping, community-driven photo verification, proactive route risk evaluation, and intelligent detour routing around flooded road segments.
+[![React Native](https://img.shields.io/badge/React_Native-v0.76-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-SDK_52-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express_v4-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas_TTL_Cache-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![Leaflet](https://img.shields.io/badge/Leaflet-v1.9.4-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-Media_CDN-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
----
+**A full-stack, crowd-powered mobile navigation engine designed to combat urban waterlogging and monsoon commuting hazards.**
 
-## 📌 Table of Contents
+[Explore Features](#-key-features) • [System Architecture](#-system-architecture) • [Tech Stack](#-technical-stack) • [Quick Start](#-quick-start--installation) • [API Docs](#-rest-api-reference)
 
-- [Problem Statement & Impact](#-problem-statement--impact)
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [Tech Stack & Software Ecosystem](#-tech-stack--software-ecosystem)
-- [Security & Engineering Design Decisions](#-security--engineering-design-decisions)
-- [API Reference](#-api-reference)
-- [Project Structure](#-project-structure)
-- [Step-by-Step Installation & Setup](#-step-by-step-installation--setup)
-  - [Prerequisites](#prerequisites)
-  - [1. Backend Setup](#1-backend-setup-rainroute-backend)
-  - [2. Mobile App Setup](#2-mobile-app-setup-rainroute)
-- [Roadmap & Enhancements](#-roadmap--enhancements)
-- [Author & Acknowledgements](#-author--acknowledgements)
+</div>
 
 ---
 
-## 🌊 Problem Statement & Impact
+### ⚡ Quick Glance / Executive Summary
 
-During heavy rainfalls and monsoon conditions, urban commuters frequently encounter unmapped flash floods, severe waterlogging, open manholes, and impassable roads. Conventional navigation applications prioritize traffic congestion or highway speeds, but lack granular, real-time awareness of transient localized water hazards.
+| Category | Key Highlight |
+| :--- | :--- |
+| **Problem** | Commuters encounter **unmapped flash floods, waterlogged roads, and vehicle-damaging hazards** during heavy rains that standard GPS apps fail to identify. |
+| **Solution** | **Real-time crowd-sourced hazard reporting**, photographic evidence verification, **proactive route risk assessment**, and **automatic flood-avoidance detours**. |
+| **Engineering Highlights** | **75m geo-fence proximity collision detection**, client-side image compression, **zero-cost Leaflet vector mapping via WebView**, and **self-purging 6-hour TTL database indexing**. |
+| **Core Stack** | **Frontend:** React Native (Expo) • **Backend:** Node.js (Express) • **Database:** MongoDB Atlas • **Media:** Cloudinary CDN |
 
-**RainRoute bridges this critical safety gap:**
-1. **Empowers Commuters**: Anyone can flag a waterlogged section in under 5 seconds with geo-tagged photographic evidence.
-2. **Proactive Hazard Detection**: When calculating routes, RainRoute checks proximity against live hazard coordinates and warns drivers before they drive into waterlogged streets.
-3. **Smart Detours**: Provides alternate paths navigating around active flood sectors.
-4. **Self-Cleaning Data Pipeline**: Using MongoDB TTL indexes, hazards naturally decay and expire after 6 hours, ensuring maps never stay cluttered with stale conditions after waters recede.
+---
+
+## 🏗️ System Architecture
+
+<p align="center">
+  <img src="docs/architecture.png" alt="RainRoute System Architecture" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);" />
+</p>
+
+### 🔄 End-to-End Data Flow
+
+1. **Capture & Optimize**: User takes a photo of waterlogging; **`expo-image-manipulator` downscales and compresses** the image on-device to conserve user bandwidth.
+2. **Direct CDN Distribution**: The compressed asset is uploaded **directly to Cloudinary** via an unsigned preset, returning an optimized secure URL.
+3. **Geo-Tagged Persistence**: The mobile client sends coordinate pairs (`latitude`, `longitude`) along with the image URL to the **Node.js/Express REST API**.
+4. **Self-Expiring Storage**: The report is saved to **MongoDB Atlas**, where a native **TTL (Time-To-Live) index automatically deletes the document after 6 hours**.
+5. **Real-Time Polling & Detour Calculation**: Active reports are distributed to all connected clients. When calculating navigation, the **OSRM routing engine checks if routes intersect any active hazard zones** and recalculates safe detours dynamically.
 
 ---
 
 ## ✨ Key Features
 
 ### 🗺️ Dynamic Interactive Map
-* **Leaflet + OpenStreetMap Integration**: Rendered inside a high-performance React Native `WebView`, eliminating vendor lock-in and high Google Maps billing fees.
-* **Animated Radar Pulse Marker**: Live GPS visualizer with concentric animated pulse rings reflecting user tracking precision.
-* **Interactive Hazard Pins**: Color-coded danger markers with interactive popups displaying verified photos, timestamps, and hazard coordinates.
+* **Lightweight Leaflet & OpenStreetMap**: Embedded inside a native `WebView`, delivering **fluid 60fps pan/zoom interactions** without expensive proprietary map SDK licenses.
+* **Animated Radar Pulse Tracking**: Live GPS visualizer with **CSS concentric pulse rings** indicating current user coordinate lock.
+* **Interactive Hazard Markers**: Custom map pins showing **real-time hazard cards with photo evidence**, exact timestamps, and coordinates upon tapping.
 
-### 🚗 Intelligent Routing & Detour Engine
-* **Turn-by-Turn Path Calculation**: Powered by OSRM (Open Source Routing Machine) with real-time distance (km) and estimated travel duration (minutes).
-* **Proximity Hazard Intersection**: Mathematical geo-fencing checks if the suggested polyline intersects within a 75-meter radius of any reported waterlogging zone.
-* **Multi-Route Analysis**: Provides recommended routes alongside calculated detours that steer clear of high-risk flood corridors.
+### 🚗 Proactive Hazard Detection & Detour Engine
+* **Turn-by-Turn Route Engine**: Powered by **OSRM (Open Source Routing Machine)**, providing precise distance (km) and estimated travel duration (minutes).
+* **75-Meter Hazard Collision Geometry**: Proactively evaluates if the suggested polyline **passes within 75 meters of an active flood zone**.
+* **Intelligent Detours**: Flags compromised paths in warning amber/red and **computes alternate bypass routes** to keep drivers safe.
 
-### 📸 Streamlined Community Reporting
-* **Instant In-App Capture**: Seamless camera and gallery integration via `expo-image-picker`.
-* **Client-Side Compression**: Uses `expo-image-manipulator` to downscale and compress images before transfer, saving mobile cellular data and accelerating upload speed.
-* **Direct CDN Offloading**: Uploads directly to Cloudinary media servers via unsigned presets, avoiding server memory bottlenecks.
+### 📸 Rapid Crowdsourced Reporting (< 5 Seconds)
+* **One-Tap Reporting**: Immediate hardware camera/gallery access via **`expo-image-picker`**.
+* **Client-Side Optimization**: Shrinks raw phone captures into lightweight web-ready payloads before network dispatch.
+* **Zero Backend Media Bottleneck**: Bypasses server memory by offloading large image transfers straight to Cloudinary CDN.
 
-### ⏱️ Automatic 6-Hour Hazard Lifecycle (TTL)
-* Flash floods recede over time. Rather than relying on manual administrative moderation, reports automatically expire and self-delete from the database 6 hours after submission via MongoDB TTL indexes.
+### ⏱️ Automated 6-Hour Hazard Decay (TTL Pipeline)
+* Monsoon hazards recede naturally. RainRoute leverages **native MongoDB TTL indexes (`expires: 21600`)**, ensuring old hazard markers **automatically expire without manual admin moderation or cron scripts**.
 
-### 🔍 Real-Time Geocoding Search
-* Fast address search powered by OpenStreetMap Nominatim with debounced keyboard query inputs.
-
----
-
-## 🏗️ System Architecture
-
-```text
-               +------------------------------------------------------+
-               |             React Native / Expo Mobile App           |
-               |                                                      |
-               |   [Leaflet WebView] <---> [OSRM Route Engine]        |
-               |          |                           |               |
-               |   [Camera / GPS]              [Search Nominatim]     |
-               +----------+---------------------------+---------------+
-                          |                           |
-                 (1) Upload Photo            (2) Post Coordinate Report
-                          |                           |
-                          v                           v
-              +----------------------+     +----------------------+
-              |    Cloudinary CDN    |     | Express REST API     |
-              | (Image Optimization) |     |  Node.js Microservice|
-              +----------+-----------+     +----------+-----------+
-                         |                            |
-                         +---- (Stores Image URL) ----+
-                                                      |
-                                                      v
-                                           +----------------------+
-                                           |  MongoDB Atlas       |
-                                           |  - Geospatial Data   |
-                                           |  - 6hr TTL Auto-Purge|
-                                           +----------------------+
-```
+### 🔍 Debounced Global Geocoding
+* Real-time destination lookup backed by **OpenStreetMap Nominatim**, complete with **query debouncing** to prevent rate-limiting during typing.
 
 ---
 
-## 🛠️ Tech Stack & Software Ecosystem
+## 🛠️ Technical Stack
 
-| Layer | Technology | Purpose & Rationale |
-| :--- | :--- | :--- |
-| **Mobile Frontend** | **React Native (0.76)** & **Expo (SDK 52)** | Cross-platform native mobile experience with rapid iteration and device hardware access. |
-| **Map Engine** | **Leaflet (1.9.4)** + **OpenStreetMap** | Open-source, lightweight vector mapping rendered in an optimized WebView with custom CSS animations. |
-| **Routing & Geocoding** | **OSRM API** & **OSM Nominatim** | Turn-by-turn route geometry calculation and debounced global address search. |
-| **Media Pipeline** | **Cloudinary CDN** + **Expo Image Manipulator** | Client-side compression and direct CDN distribution for high-availability image hosting. |
-| **Backend Framework** | **Node.js** & **Express.js (v4)** | Lightweight, non-blocking asynchronous RESTful API architecture. |
-| **Database** | **MongoDB Atlas** & **Mongoose (v8)** | NoSQL document storage with native schema validation and TTL (Time-To-Live) index expiration. |
-| **Security & Middleware** | **CORS**, **Dotenv**, **Custom Error Handling** | Network boundary safety, environment isolation, and structured JSON error reporting. |
+### **Frontend (Mobile App)**
+* **Framework:** React Native (0.76) via Expo (SDK 52)
+* **Map Container:** React Native WebView + Leaflet 1.9.4 & OpenStreetMap
+* **Routing Engine:** Open Source Routing Machine (OSRM) REST API
+* **Geocoding:** OSM Nominatim Search API
+* **Media & Hardware:** Expo Camera, Image Picker, Image Manipulator, Expo Location
+* **UI & Styling:** Custom dark/light responsive layout with Lucide & Ionicons
 
----
-
-## 🔒 Security & Engineering Design Decisions
-
-### 1. Why is `.env` Isolated from Git?
-* The backend interacts with a live **MongoDB Atlas cluster**. Database connection strings contain embedded database user credentials (`mongodb://username:password@...`).
-* Exposing connection strings on public GitHub repositories allows automated credential-scraping bots to compromise data integrity.
-* **Solution**: All sensitive credentials reside strictly in local `.env` files protected by `.gitignore`. A sample [.env.example](file:///d:/CODES/RainRoute/rainroute-backend/.env.example) template is provided for quick environment setup.
-
-### 2. Client-Side Image Offloading (Cloudinary Unsigned Preset)
-* Mobile images are sent directly to Cloudinary using an **unsigned upload preset** with restricted asset folder access.
-* This avoids piping large binary multipart form streams through the Express server, drastically reducing backend CPU/RAM usage and protecting Cloudinary API master secrets from being decompiled out of client-side mobile bundles.
-
-### 3. Coordinate Bounds Validation
-* Strict server-side coordinate sanitation enforces Latitude `[-90, 90]` and Longitude `[-180, 180]` before any record is committed to the database, preventing injection attacks and malformed spatial points.
-
-### 4. Automated Data Lifecycle via TTL Indexes
-* Monsoon hazards are temporary by nature. RainRoute utilizes a MongoDB TTL index on the `createdAt` field (`expires: 21600` seconds / 6 hours). Once the time threshold is passed, the database background thread cleans up expired documents automatically without requiring cron jobs.
+### **Backend (API Service)**
+* **Runtime:** Node.js (LTS) & Express.js (v4)
+* **Database:** MongoDB Atlas with Mongoose (v8) ORM
+* **Data Lifecycle:** MongoDB Native TTL Indexes
+* **Media Storage:** Cloudinary Cloud Media CDN
+* **Security & Utility:** CORS configuration, custom error-handling middleware, and coordinate sanitization
 
 ---
 
-## 📡 API Reference
+## 📐 Engineering Design Highlights
 
-Base URL: `http://<SERVER_IP>:3000/api/reports`
+### ⚡ Client-Side Media Offloading
+Piping large multi-megabyte image payloads through an Express server consumes critical CPU threads and memory. RainRoute leverages **client-side compression paired with direct CDN uploads**. The backend API only handles lightweight JSON coordinate payloads (~200 bytes), **maximizing API throughput and scalability**.
 
-| Method | Endpoint | Description | Request Body / Query | Status Code |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/reports` | Submit a new waterlog hazard report | `{ "latitude": Number, "longitude": Number, "imageUrl": String }` | `201 Created` |
-| `GET` | `/api/reports` | Retrieve all active, non-expired reports | None | `200 OK` |
-| `GET` | `/api/reports/stats` | System health check and active hazard count | None | `200 OK` |
+### 🔄 Zero-Maintenance Data Hygiene (MongoDB TTL)
+Temporary hazards should not linger forever. Rather than running scheduled cron jobs or server background timers, RainRoute offloads expiration to **MongoDB’s internal TTL engine**. Documents are indexed on `createdAt` with an expiration window of 21,600 seconds (6 hours), guaranteeing **zero database bloat with zero infrastructure maintenance**.
 
-#### Sample Report Payload (`POST /api/reports`)
+### 🛡️ Strict Coordinate Boundary Sanitization
+To prevent injection attacks and corrupt geospatial geometry, all incoming coordinate inputs are strictly validated on the backend:
+$$\text{Latitude} \in [-90, 90] \quad\text{and}\quad \text{Longitude} \in [-180, 180]$$
+Non-numeric or out-of-bounds inputs are rejected before reaching database operations.
+
+---
+
+## 📡 REST API Reference
+
+Base Endpoint: `http://<SERVER_HOST>:3000/api/reports`
+
+### 1. Submit Waterlog Report
+* **Endpoint:** `POST /api/reports`
+* **Status:** `201 Created`
+* **Request Payload:**
 ```json
 {
   "latitude": 22.7196,
   "longitude": 75.8577,
-  "imageUrl": "https://res.cloudinary.com/dn8mfr6sw/image/upload/v1729000000/rainroute/sample.jpg"
+  "imageUrl": "https://res.cloudinary.com/dn8mfr6sw/image/upload/v1729000000/rainroute/hazard.jpg"
+}
+```
+
+### 2. Fetch Active Hazards
+* **Endpoint:** `GET /api/reports`
+* **Status:** `200 OK`
+* **Description:** Retrieves all active, non-expired reports for dynamic map plotting.
+
+### 3. Service Health & Hazard Statistics
+* **Endpoint:** `GET /api/reports/stats`
+* **Status:** `200 OK`
+* **Response:**
+```json
+{
+  "success": true,
+  "activeReportsCount": 14,
+  "serverTime": "2026-10-17T12:00:00.000Z"
 }
 ```
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```text
 RainRoute/
-├── README.md                      # Comprehensive project documentation
-├── .gitignore                     # Root-level ignore rules (node_modules, .env, build artifacts)
+├── docs/
+│   └── architecture.png           # System architecture infographic
+├── README.md                      # Primary project documentation
+├── .gitignore                     # Repository-wide ignore definitions
 │
 ├── rainroute-backend/             # Express.js REST API
-│   ├── .env.example               # Safe environment variable template
-│   ├── .gitignore                 # Backend-specific ignore rules
-│   ├── server.js                  # Express entry point & middleware registration
-│   ├── package.json               # Backend dependencies and scripts
+│   ├── .env.example               # Environment variables template
+│   ├── server.js                  # App bootstrap and middleware registration
+│   ├── package.json               # Backend dependencies
 │   └── src/
-│       ├── config/
-│       │   └── db.js              # MongoDB Atlas Mongoose connection handler
-│       ├── controllers/
-│       │   └── reportController.js# Request parsing, coordinate validation & status codes
-│       ├── middleware/
-│       │   ├── errorHandler.js    # Centralized JSON error response handler
-│       │   └── logger.js          # Request method and path logging
-│       ├── models/
-│       │   └── Report.js          # Mongoose schema with 6-hour TTL expiration
-│       ├── routes/
-│       │   └── reportRoutes.js    # Express route declarations
-│       └── services/
-│           └── reportService.js   # Database querying abstraction
+│       ├── config/db.js           # Mongoose Atlas connection client
+│       ├── controllers/           # Request parsing & input validation
+│       ├── middleware/            # Error handling & HTTP logging
+│       ├── models/Report.js       # Data schema with 6-hour TTL index
+│       ├── routes/reportRoutes.js # REST endpoint definitions
+│       └── services/              # Database query abstractions
 │
 └── rainroute/                     # React Native / Expo Mobile App
-    ├── app.json                   # Expo configuration & app permissions
-    ├── App.js                     # Main application logic, state, and routing coordinator
+    ├── app.json                   # App manifest & permissions
+    ├── App.js                     # Root controller, state & routing orchestrator
     ├── package.json               # Mobile frontend dependencies
-    ├── assets/                    # App icons, splash screens, and visuals
+    ├── assets/                    # Icons and splash branding
     └── src/
         ├── components/
-        │   ├── MapScreen.js       # Leaflet map container embedded in WebView
-        │   └── ActionButtons.js   # Floating action bar (Camera, Location, Route, Hazard)
-        ├── config/
-        │   └── cloudinary.js      # Cloudinary cloud name & unsigned upload preset
+        │   ├── MapScreen.js       # Leaflet vector map inside native WebView
+        │   └── ActionButtons.js   # Floating action bar controls
+        ├── config/cloudinary.js   # Cloudinary configuration
         └── services/
-            ├── apiService.js      # Backend API communication, OSRM routing & geocoding
-            ├── locationService.js # High-accuracy & fast GPS acquisition via Expo Location
-            └── uploadService.js   # Camera picker, image compression & CDN upload
+            ├── apiService.js      # Backend client, OSRM routing & geocoding
+            ├── locationService.js # High-precision GPS tracking
+            └── uploadService.js   # Media capture, compression & CDN pipeline
 ```
 
 ---
 
-## 🚀 Step-by-Step Installation & Setup
+## 🚀 Quick Start & Installation
 
 ### Prerequisites
-* **Node.js**: v18.x or v20.x installed ([Download Node.js](https://nodejs.org/))
-* **Git**: Installed on your system
-* **Expo Go**: Installed on your physical iOS or Android device ([Expo Go](https://expo.dev/client))
-* **MongoDB Atlas Database**: Free cluster connection string ([MongoDB Atlas](https://www.mongodb.com/atlas))
+* **Node.js** (v18.x or v20.x)
+* **Git**
+* **Expo Go App** installed on your physical mobile device ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
 
 ---
 
 ### 1. Backend Setup (`rainroute-backend`)
 
-1. **Navigate to the backend directory**:
-   ```bash
-   cd rainroute-backend
-   ```
+```bash
+# 1. Navigate to the backend directory
+cd rainroute-backend
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Configure environment variables**:
-   Create a `.env` file from the provided template:
-   ```bash
-   cp .env.example .env
-   ```
-   Open `.env` and enter your MongoDB connection string and port:
-   ```env
-   PORT=3000
-   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/rainroute?retryWrites=true&w=majority
-   ```
+# 3. Create your environment config
+cp .env.example .env
 
-4. **Start the backend server**:
-   ```bash
-   npm start
-   ```
-   *Expected Output:*
-   ```text
-   🚀 RainRoute Backend listening on port 3000
-   ✅ MongoDB Connected: cluster0-shard-00-00.mongodb.net
-   ```
+# 4. Add your MongoDB connection string in .env:
+# PORT=3000
+# MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/rainroute?retryWrites=true&w=majority
+
+# 5. Start the server
+npm start
+```
 
 ---
 
-### 2. Mobile App Setup (`rainroute`)
+### 2. Frontend Setup (`rainroute`)
 
-1. **Open a new terminal and navigate to the frontend**:
-   ```bash
-   cd rainroute
-   ```
+```bash
+# 1. In a new terminal, navigate to the mobile app directory
+cd rainroute
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Configure Backend IP**:
-   * Open [rainroute/src/services/apiService.js](file:///d:/CODES/RainRoute/rainroute/src/services/apiService.js).
-   * Update `DEFAULT_SERVER_URL` with your development machine's local Wi-Fi IP:
-     ```javascript
-     export const DEFAULT_SERVER_URL = 'http://<YOUR_LOCAL_IP>:3000/api/reports';
-     ```
-   *(Note: You can also update the server URL dynamically inside the running app using the Server Settings modal).*
+# 3. Configure backend IP address
+# Open src/services/apiService.js and set your machine's Wi-Fi IP:
+# export const DEFAULT_SERVER_URL = 'http://<YOUR_LOCAL_IP>:3000/api/reports';
 
-4. **Start the Expo development server**:
-   ```bash
-   npx expo start
-   ```
+# 4. Start the Expo bundler
+npx expo start
+```
 
-5. **Run on Device**:
-   * Scan the displayed QR code with your phone camera (iOS) or the **Expo Go** app (Android).
-   * Ensure your mobile device and computer are connected to the same Wi-Fi network.
+> **Tip:** Scan the generated terminal QR code with your phone camera (iOS) or **Expo Go** app (Android) to launch the app on your device instantly.
 
 ---
 
-## 🔮 Roadmap & Enhancements
+## 🔮 Future Enhancements
 
-- [ ] **AI Water Depth Estimation**: Integrate a computer vision model to infer flood depth (e.g. ankle, knee, vehicle hood) directly from user-submitted photos.
-- [ ] **Official Weather Radar Overlay**: Integrate OpenWeatherMap precipitative radar layers directly onto the Leaflet map.
-- [ ] **Push Notification Geofencing**: Alert users when entering an active high-density flood sector.
-- [ ] **Offline Hazard Caching**: Cache recent hazard points locally using AsyncStorage / SQLite for offline navigation when mobile data drops during storms.
+- [ ] **AI Water Depth Classification**: Implement a computer vision pipeline (TensorFlow.js) to classify flood severity (e.g., *Passable*, *Caution*, *Critical*) from photos.
+- [ ] **Precipitation Radar Layer**: Overlay live satellite rain Doppler radar imagery directly onto Leaflet.
+- [ ] **Proximity Geofence Push Notifications**: Notify drivers when approaching a known hazard hotspot within 500 meters.
 
 ---
 
-## 👤 Author & Acknowledgements
+## 👨‍💻 Author & Contributions
 
-* **Developer**: Rishi Patel ([@rishipatel83](https://github.com/rishipatel83))
-* **Contact**: [rishi.777.patel@gmail.com](mailto:rishi.777.patel@gmail.com)
-* **Open Source Attribution**:
-  * [OpenStreetMap](https://www.openstreetmap.org/) & [Leaflet](https://leafletjs.com/) for mapping infrastructure
-  * [OSRM Project](https://project-osrm.org/) for routing computations
-  * [Expo](https://expo.dev/) for React Native developer tooling
+* **Author:** Rishi Patel ([@rishipatel83](https://github.com/rishipatel83))
+* **Contact:** [rishi.777.patel@gmail.com](mailto:rishi.777.patel@gmail.com)
+* **Contributions:** Open-source contributions, feature requests, and bug reports are welcome via Pull Requests.
