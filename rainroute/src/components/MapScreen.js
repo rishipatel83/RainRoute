@@ -41,28 +41,28 @@ const INITIAL_HTML = `
       /* Radar Pulse for Current Location */
       .user-pulse-container {
         position: relative;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .user-pulse-ring {
         position: absolute;
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: rgba(37, 99, 235, 0.28);
+        background: rgba(37, 99, 235, 0.32);
         animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
       }
       .user-pulse-core {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         background: #2563eb;
-        border: 3px solid #ffffff;
+        border: 3.5px solid #ffffff;
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-        z-index: 2;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        z-index: 5;
       }
       @keyframes pulseRing {
         0% { transform: scale(0.6); opacity: 0.9; }
@@ -73,16 +73,17 @@ const INITIAL_HTML = `
       /* Hazard Marker Ripple */
       .hazard-marker-wrapper {
         position: relative;
-        width: 42px;
-        height: 42px;
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
       }
       .hazard-pulse-ring {
         position: absolute;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         animation: hazardPulse 1.8s ease-out infinite;
       }
@@ -107,6 +108,7 @@ const INITIAL_HTML = `
       var alternativeRouteLayer = null;
       var userMarker = null;
       var waterlogLayer = null;
+      window.reportsArray = [];
 
       // Bridge for admin actions from popup HTML
       window.triggerHazardAction = function(action, reportId) {
@@ -137,10 +139,29 @@ const INITIAL_HTML = `
           }
         });
 
-        // Tap sets destination
+        // Tap sets destination (with smart hazard proximity tap-protection)
         map.on('click', function(e) {
           var lat = e.latlng.lat;
           var lng = e.latlng.lng;
+
+          // Check if click was within finger-tap proximity of any hazard marker
+          if (window.reportsArray && window.reportsArray.length > 0) {
+            var clickPt = map.latLngToContainerPoint(e.latlng);
+            for (var i = 0; i < window.reportsArray.length; i++) {
+              var h = window.reportsArray[i];
+              var hPt = map.latLngToContainerPoint([h.latitude, h.longitude]);
+              var pxDist = Math.hypot(clickPt.x - hPt.x, clickPt.y - hPt.y);
+              var meterDist = map.distance(e.latlng, [h.latitude, h.longitude]);
+              
+              // If within 42 screen pixels or 45 meters, open hazard popup and prevent accidental pin drop
+              if (pxDist < 42 || meterDist < 45) {
+                if (window.hazardMarkersMap && window.hazardMarkersMap[h._id]) {
+                  window.hazardMarkersMap[h._id].openPopup();
+                }
+                return;
+              }
+            }
+          }
 
           setDestinationMarker(lat, lng);
 
@@ -164,49 +185,49 @@ const INITIAL_HTML = `
         console.error("Map initialization error:", err);
       }
 
-      // Authentic Google Maps Style Red Teardrop Pin
+      // Exact Slender Teardrop Red Pin (Matching Uploaded Design with Dark Core & Thinner Needle Bottom)
       function setDestinationMarker(lat, lng) {
         if (!map) return;
-        var googlePinHtml = '<svg width="34" height="46" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));">' +
-                              '<path d="M17 0C7.611 0 0 7.611 0 17C0 29.75 17 46 17 46C17 46 34 29.75 34 17C34 7.611 26.389 0 17 0Z" fill="#EA4335"/>' +
-                              '<circle cx="17" cy="17" r="6.5" fill="#FFFFFF"/>' +
+        var googlePinHtml = '<svg width="36" height="54" viewBox="0 0 36 54" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.38));">' +
+                              '<path d="M18 1C8.6 1 1 8.6 1 18C1 26.5 6.5 34.5 13.5 43.5C16.2 47 17.5 51.5 17.7 53.5C17.8 54.2 18.2 54.2 18.3 53.5C18.5 51.5 19.8 47 22.5 43.5C29.5 34.5 35 26.5 35 18C35 8.6 27.4 1 18 1Z" fill="#EA4335"/>' +
+                              '<circle cx="18" cy="18" r="8" fill="#761E19"/>' +
                             '</svg>';
 
         var redPinIcon = L.divIcon({
           className: 'google-destination-pin',
           html: googlePinHtml,
-          iconSize: [34, 46],
-          iconAnchor: [17, 46],
-          popupAnchor: [0, -42]
+          iconSize: [36, 54],
+          iconAnchor: [18, 54],
+          popupAnchor: [0, -50]
         });
 
         if (destinationMarker) {
           destinationMarker.setLatLng([lat, lng]);
         } else {
-          destinationMarker = L.marker([lat, lng], { icon: redPinIcon }).addTo(map);
+          destinationMarker = L.marker([lat, lng], { icon: redPinIcon, zIndexOffset: 3000 }).addTo(map);
         }
       }
 
-      // Custom Start Marker (Green Google Maps Style Pin)
+      // Exact Slender Teardrop Green Start Pin (with Dark Forest Green Core & Thinner Needle Bottom)
       function setStartMarker(lat, lng) {
         if (!map) return;
-        var startPinHtml = '<svg width="34" height="46" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));">' +
-                             '<path d="M17 0C7.611 0 0 7.611 0 17C0 29.75 17 46 17 46C17 46 34 29.75 34 17C34 7.611 26.389 0 17 0Z" fill="#10B981"/>' +
-                             '<circle cx="17" cy="17" r="6.5" fill="#FFFFFF"/>' +
+        var startPinHtml = '<svg width="36" height="54" viewBox="0 0 36 54" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.38));">' +
+                             '<path d="M18 1C8.6 1 1 8.6 1 18C1 26.5 6.5 34.5 13.5 43.5C16.2 47 17.5 51.5 17.7 53.5C17.8 54.2 18.2 54.2 18.3 53.5C18.5 51.5 19.8 47 22.5 43.5C29.5 34.5 35 26.5 35 18C35 8.6 27.4 1 18 1Z" fill="#10B981"/>' +
+                             '<circle cx="18" cy="18" r="8" fill="#064E3B"/>' +
                            '</svg>';
 
         var startPinIcon = L.divIcon({
           className: 'google-start-pin',
           html: startPinHtml,
-          iconSize: [34, 46],
-          iconAnchor: [17, 46],
-          popupAnchor: [0, -42]
+          iconSize: [36, 54],
+          iconAnchor: [18, 54],
+          popupAnchor: [0, -50]
         });
 
         if (startMarker) {
           startMarker.setLatLng([lat, lng]);
         } else {
-          startMarker = L.marker([lat, lng], { icon: startPinIcon }).addTo(map);
+          startMarker = L.marker([lat, lng], { icon: startPinIcon, zIndexOffset: 3000 }).addTo(map);
         }
       }
     </script>

@@ -1,21 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   View,
   Text,
   Modal,
   TouchableOpacity,
-  TextInput,
   Platform,
 } from 'react-native';
 import {
   Ionicons,
   MaterialIcons,
   MaterialCommunityIcons,
-  Feather,
 } from '@expo/vector-icons';
-import Toast from 'react-native-toast-message';
-import { getServerUrl, setServerUrl } from '../services/apiService';
 
 export default function MenuDrawer({
   visible,
@@ -27,21 +23,6 @@ export default function MenuDrawer({
   isAdmin,
   reportCount = 0,
 }) {
-  const [showServerConfig, setShowServerConfig] = useState(false);
-  const [tempUrl, setTempUrl] = useState(getServerUrl());
-
-  const handleSaveUrl = () => {
-    if (tempUrl.trim()) {
-      setServerUrl(tempUrl.trim());
-      Toast.show({
-        type: 'success',
-        text1: 'Server URL Updated',
-        text2: `Target: ${tempUrl.trim()}`,
-      });
-      setShowServerConfig(false);
-    }
-  };
-
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
@@ -71,16 +52,16 @@ export default function MenuDrawer({
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
               <Text style={[styles.metricValue, { color: '#16a34a' }]}>6h</Text>
-              <Text style={styles.metricLabel}>TTL Decay</Text>
+              <Text style={styles.metricLabel}>Auto Decay</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: '#2563eb' }]}>OSRM</Text>
-              <Text style={styles.metricLabel}>Routing</Text>
+              <Text style={[styles.metricValue, { color: '#2563eb' }]}>Realtime</Text>
+              <Text style={styles.metricLabel}>GPS Routing</Text>
             </View>
           </View>
 
-          {/* Nav Items */}
+          {/* Navigation Items */}
           <View style={styles.navSection}>
             <TouchableOpacity
               style={styles.navItem}
@@ -131,7 +112,7 @@ export default function MenuDrawer({
               </View>
               <View style={styles.navTextWrap}>
                 <Text style={styles.navLabel}>Send Feedback</Text>
-                <Text style={styles.navSub}>Suggest features or report bugs</Text>
+                <Text style={styles.navSub}>Suggest features or improvements</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
             </TouchableOpacity>
@@ -161,7 +142,7 @@ export default function MenuDrawer({
                   <Text style={styles.navLabel}>Admin Portal</Text>
                   {isAdmin && (
                     <View style={styles.activePill}>
-                      <Text style={styles.activePillText}>Active</Text>
+                      <Text style={styles.activePillText}>Signed In</Text>
                     </View>
                   )}
                 </View>
@@ -171,50 +152,12 @@ export default function MenuDrawer({
               </View>
               <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => setShowServerConfig(!showServerConfig)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.navIconWrap, { backgroundColor: '#f8fafc' }]}>
-                <Feather name="server" size={18} color="#64748b" />
-              </View>
-              <View style={styles.navTextWrap}>
-                <Text style={styles.navLabel}>Backend Network Host</Text>
-                <Text style={styles.navSub} numberOfLines={1}>
-                  {getServerUrl()}
-                </Text>
-              </View>
-              <Ionicons
-                name={showServerConfig ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color="#94a3b8"
-              />
-            </TouchableOpacity>
-
-            {showServerConfig && (
-              <View style={styles.serverConfigBox}>
-                <TextInput
-                  style={styles.serverInput}
-                  value={tempUrl}
-                  onChangeText={setTempUrl}
-                  placeholder="http://192.168.1.5:3000/api/reports"
-                  placeholderTextColor="#94a3b8"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity style={styles.saveUrlBtn} onPress={handleSaveUrl}>
-                  <Text style={styles.saveUrlText}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
 
-          {/* Footer Info */}
+          {/* Clean Production Footer */}
           <View style={styles.menuFooter}>
-            <Text style={styles.footerVersion}>RainRoute v2.4 Production Edition</Text>
-            <Text style={styles.footerSub}>Leaflet • OpenStreetMap • OSRM • Cloudinary</Text>
+            <Text style={styles.footerVersion}>RainRoute v2.4</Text>
+            <Text style={styles.footerSub}>Safe & Smart Monsoon Commuting</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -356,50 +299,21 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 1,
   },
-  serverConfigBox: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingBottom: 8,
-  },
-  serverInput: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    fontSize: 11,
-    color: '#0f172a',
-  },
-  saveUrlBtn: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  saveUrlText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
   menuFooter: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     backgroundColor: '#f8fafc',
   },
   footerVersion: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
   },
   footerSub: {
-    fontSize: 9,
-    color: '#94a3b8',
+    fontSize: 10,
+    color: '#64748b',
     marginTop: 2,
   },
 });

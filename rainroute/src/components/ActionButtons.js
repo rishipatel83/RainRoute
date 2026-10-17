@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     bottom: 26,
   },
   containerWithRoute: {
-    bottom: 230, // Floats cleanly above the route info card
+    bottom: 280, // Floats cleanly above the route navigation card
   },
   reportFab: {
     backgroundColor: '#dc2626',

@@ -12,6 +12,7 @@ import {
   LogBox,
   Platform,
 } from "react-native";
+import * as Location from "expo-location";
 import Toast from "react-native-toast-message";
 import { Ionicons, Feather, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -30,6 +31,7 @@ import FaqModal from "./src/components/FaqModal";
 import FeedbackModal from "./src/components/FeedbackModal";
 import AdminModal from "./src/components/AdminModal";
 import MenuDrawer from "./src/components/MenuDrawer";
+import WeatherWidget from "./src/components/WeatherWidget";
 
 // Services
 import {
@@ -90,12 +92,26 @@ export default function App() {
   const webViewRef = useRef(null);
   const mapReadyRef = useRef(false);
   const searchTimeoutRef = useRef(null);
+  const locationWatcherRef = useRef(null);
 
-  // Auto-refresh active hazards every 45 seconds
+  // Cleanup location watcher on unmount
   useEffect(() => {
+    return () => {
+      if (locationWatcherRef.current) {
+        locationWatcherRef.current.remove();
+        locationWatcherRef.current = null;
+      }
+    };
+  }, []);
+
+  // Auto-refresh active hazards every 45 seconds and instantly when adminToken changes
+  useEffect(() => {
+    if (mapReadyRef.current) {
+      loadWaterlogMarkers(adminToken);
+    }
     const timer = setInterval(() => {
       if (mapReadyRef.current) {
-        loadWaterlogMarkers();
+        loadWaterlogMarkers(adminToken);
       }
     }, 45000);
     return () => clearInterval(timer);
@@ -107,13 +123,13 @@ export default function App() {
     if (coords) {
       updateMapLocation(coords.latitude, coords.longitude);
     }
-    await loadWaterlogMarkers();
+    await loadWaterlogMarkers(adminToken);
   };
 
   /**
    * Loads hazards and plots rich multi-category markers on Leaflet
    */
-  const loadWaterlogMarkers = async () => {
+  const loadWaterlogMarkers = async (tokenOverride = undefined) => {
     try {
       const reports = await fetchActiveReports();
       setActiveReports(reports);
@@ -121,18 +137,24 @@ export default function App() {
       if (!webViewRef.current) return;
 
       const safeData = JSON.stringify(reports || []);
-      const isAdminActive = !!adminToken;
+      const currentToken = tokenOverride !== undefined ? tokenOverride : adminToken;
+      const isAdminActive = !!currentToken;
 
       const markerScript = `
         try {
           if (!window.map) { true; }
+          if (window.map) {
+            window.map.closePopup(); // Instantly close any stale popup
+          }
           if (window.waterlogLayer) {
             window.waterlogLayer.clearLayers(); 
           } else {
             window.waterlogLayer = L.layerGroup().addTo(map);
           }
 
-          var reportsArray = ${safeData};
+          window.reportsArray = ${safeData};
+          window.hazardMarkersMap = window.hazardMarkersMap || {};
+          var reportsArray = window.reportsArray;
           var isAdmin = ${isAdminActive};
 
           // Palette and SVG icons by hazard type
@@ -151,14 +173,14 @@ export default function App() {
 
             var hazardIcon = L.divIcon({
               className: 'hazard-custom-pin',
-              html: '<div class="hazard-marker-wrapper">' +
+              html: '<div class="hazard-marker-wrapper" style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; cursor:pointer;">' +
                     '<div class="hazard-pulse-ring" style="background:' + cfg.color + '40;"></div>' +
-                    '<div style="width:34px; height:34px; border-radius:17px; background:' + cfg.color + '; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.35); border:2.5px solid #ffffff; font-size:16px;">' +
+                    '<div style="width:36px; height:36px; border-radius:18px; background:' + cfg.color + '; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.38); border:2.5px solid #ffffff; font-size:17px;">' +
                     cfg.icon +
                     '</div>' +
                     '</div>',
-              iconSize: [42, 42],
-              iconAnchor: [21, 21]
+              iconSize: [48, 48],
+              iconAnchor: [24, 24]
             });
 
             var adminButtonsHtml = '';
@@ -182,7 +204,7 @@ export default function App() {
                               "</div>" +
                             "</div>";
 
-            var marker = L.marker([report.latitude, report.longitude], { icon: hazardIcon }).bindPopup(popupHTML);
+            var marker = L.marker([report.latitude, report.longitude], { icon: hazardIcon, zIndexOffset: 2000 }).bindPopup(popupHTML);
             
             // 50m translucent danger buffer zone
             var dangerCircle = L.circle([report.latitude, report.longitude], {
@@ -194,6 +216,21 @@ export default function App() {
               dashArray: '4, 4'
             });
 
+            // Prevent event propagation so tapping marker/circle opens popup and NEVER triggers map.on('click')
+            marker.on('click', function(ev) {
+              if (ev && ev.originalEvent) {
+                L.DomEvent.stopPropagation(ev);
+              }
+              marker.openPopup();
+            });
+            dangerCircle.on('click', function(ev) {
+              if (ev && ev.originalEvent) {
+                L.DomEvent.stopPropagation(ev);
+              }
+              marker.openPopup();
+            });
+
+            window.hazardMarkersMap[report._id] = marker;
             window.waterlogLayer.addLayer(dangerCircle);
             window.waterlogLayer.addLayer(marker);
           });
@@ -215,6 +252,9 @@ export default function App() {
         type: "error",
         text1: "Admin Login Required",
         text2: "Open Menu > Admin Portal to authenticate.",
+        position: "top",
+        topOffset: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95,
+        visibilityTime: 3500,
       });
       return;
     }
@@ -226,10 +266,18 @@ export default function App() {
           type: "success",
           text1: "Hazard Marked Fixed! 🛠️",
           text2: "Report status set to resolved.",
+          position: "top",
+          topOffset: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95,
         });
-        await loadWaterlogMarkers();
+        await loadWaterlogMarkers(adminToken);
       } catch (e) {
-        Toast.show({ type: "error", text1: "Update Failed", text2: e.message });
+        Toast.show({
+          type: "error",
+          text1: "Update Failed",
+          text2: e.message,
+          position: "top",
+          topOffset: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95,
+        });
       }
     } else if (action === "delete") {
       try {
@@ -238,10 +286,18 @@ export default function App() {
           type: "success",
           text1: "Hazard Removed 🗑️",
           text2: "Report permanently deleted.",
+          position: "top",
+          topOffset: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95,
         });
-        await loadWaterlogMarkers();
+        await loadWaterlogMarkers(adminToken);
       } catch (e) {
-        Toast.show({ type: "error", text1: "Delete Failed", text2: e.message });
+        Toast.show({
+          type: "error",
+          text1: "Delete Failed",
+          text2: e.message,
+          position: "top",
+          topOffset: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95,
+        });
       }
     }
   };
@@ -262,7 +318,7 @@ export default function App() {
             if (window.userMarker) {
               window.userMarker.setLatLng([${lat}, ${lng}]);
             } else {
-              window.userMarker = L.marker([${lat}, ${lng}], { icon: pulseIcon }).addTo(map);
+              window.userMarker = L.marker([${lat}, ${lng}], { icon: pulseIcon, zIndexOffset: 5000 }).addTo(map);
             }
           }
         } catch(e) { console.error('Set user location error:', e); }
@@ -295,7 +351,15 @@ export default function App() {
           lineCap: 'round'
         }).addTo(map);
 
-        map.fitBounds(window.routeLayer.getBounds(), { padding: [70, 70] });
+        var bounds = window.routeLayer.getBounds();
+        if (window.userMarker) {
+          bounds.extend(window.userMarker.getLatLng());
+        }
+        map.fitBounds(bounds, {
+          paddingTopLeft: [40, 110],
+          paddingBottomRight: [40, 280],
+          maxZoom: 16
+        });
       } catch(error) { console.error('Route draw error:', error); }
       true;
     `;
@@ -303,6 +367,10 @@ export default function App() {
   };
 
   const clearCurrentRoute = () => {
+    if (locationWatcherRef.current) {
+      locationWatcherRef.current.remove();
+      locationWatcherRef.current = null;
+    }
     setRouteDetails(null);
     setDestinationCoords(null);
     setSelectedRouteIndex(0);
@@ -345,15 +413,16 @@ export default function App() {
   };
 
   const checkRouteSafety = (routeCoords) => {
-    const HAZARD_RADIUS = 60; // 60 meters proximity buffer
-    let count = 0;
-    let collidingHazard = null;
+    const HAZARD_RADIUS = 50; // 50 meters proximity buffer
+    const collidingHazardsMap = new Map();
 
-    for (let i = 0; i < routeCoords.length; i++) {
-      const routeLng = routeCoords[i][0];
-      const routeLat = routeCoords[i][1];
-      for (let j = 0; j < activeReports.length; j++) {
-        const hazard = activeReports[j];
+    for (let j = 0; j < activeReports.length; j++) {
+      const hazard = activeReports[j];
+      if (hazard.status === "resolved") continue;
+
+      for (let i = 0; i < routeCoords.length; i++) {
+        const routeLng = routeCoords[i][0];
+        const routeLat = routeCoords[i][1];
         if (
           getDistanceInMeters(
             routeLat,
@@ -362,15 +431,21 @@ export default function App() {
             hazard.longitude
           ) < HAZARD_RADIUS
         ) {
-          count++;
-          if (!collidingHazard) collidingHazard = hazard;
+          const key = hazard._id ? hazard._id.toString() : `${hazard.latitude},${hazard.longitude}`;
+          collidingHazardsMap.set(key, hazard);
+          break; // Found collision for this hazard, do not count the same hazard multiple times
         }
       }
     }
+
+    const uniqueColliding = Array.from(collidingHazardsMap.values());
+    const count = uniqueColliding.length;
+
     return {
       isDangerous: count > 0,
       hazardPointsCount: count,
-      collidingHazard,
+      collidingHazard: count > 0 ? uniqueColliding[0] : null,
+      collidingHazards: uniqueColliding,
     };
   };
 
@@ -704,6 +779,82 @@ export default function App() {
     await loadWaterlogMarkers();
   };
 
+  /**
+   * Toggles live GPS turn-by-turn tracking using hardware sensors
+   */
+  const handleToggleNavigation = async () => {
+    if (isNavigating) {
+      if (locationWatcherRef.current) {
+        locationWatcherRef.current.remove();
+        locationWatcherRef.current = null;
+      }
+      setIsNavigating(false);
+      Toast.show({
+        type: "info",
+        text1: "Navigation Stopped",
+        text2: "Real-time GPS movement tracking paused.",
+        position: "top",
+        topOffset: 125,
+      });
+    } else {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Toast.show({
+            type: "error",
+            text1: "Location Permission Needed",
+            text2: "Enable GPS location in settings to track navigation.",
+            position: "top",
+            topOffset: 125,
+          });
+          return;
+        }
+
+        setIsNavigating(true);
+
+        Toast.show({
+          type: "success",
+          text1: "🛰️ Live GPS Navigation Active",
+          text2: "Blue dot and camera will follow your real-time movement.",
+          position: "top",
+          topOffset: 125,
+          visibilityTime: 4000,
+        });
+
+        // Watch hardware GPS continuously as user walks/drives
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 2000,
+            distanceInterval: 2,
+          },
+          (loc) => {
+            const { latitude, longitude } = loc.coords;
+            setUserLocation({ lat: latitude, lng: longitude });
+
+            if (webViewRef.current) {
+              webViewRef.current.injectJavaScript(`
+                try {
+                  if (window.map) {
+                    if (window.userMarker) {
+                      window.userMarker.setLatLng([${latitude}, ${longitude}]);
+                    }
+                    map.panTo([${latitude}, ${longitude}], { animate: true, duration: 0.8 });
+                  }
+                } catch(e) {}
+                true;
+              `);
+            }
+          }
+        );
+        locationWatcherRef.current = sub;
+      } catch (err) {
+        console.warn("Navigation watcher error:", err);
+        setIsNavigating(false);
+      }
+    }
+  };
+
   const currentRoute = routeDetails ? routeDetails.routes[selectedRouteIndex] : null;
 
   return (
@@ -761,17 +912,23 @@ export default function App() {
             )}
           </View>
 
-          {/* Sub-bar for Custom GPS Start reset */}
-          {customStartSelected && (
-            <TouchableOpacity
-              style={styles.customStartSubBar}
-              onPress={handleResetToGps}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="locate" size={13} color="#059669" />
-              <Text style={styles.customStartText}>Custom Origin Active • Tap to restore GPS</Text>
-            </TouchableOpacity>
-          )}
+          {/* Sub-bar Row: Custom GPS Origin & Interactive Live Weather Capsule */}
+          <View style={styles.subSearchBarRow} pointerEvents="box-none">
+            {customStartSelected ? (
+              <TouchableOpacity
+                style={styles.customStartSubBar}
+                onPress={handleResetToGps}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="locate" size={13} color="#059669" />
+                <Text style={styles.customStartText}>Custom Origin Active • Tap to restore GPS</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{ flex: 1 }} />
+            )}
+
+            <WeatherWidget userLocation={userLocation} />
+          </View>
 
           {/* Search Suggestions Dropdown */}
           {suggestions.length > 0 && (
@@ -816,11 +973,11 @@ export default function App() {
         onHazardAction={handleHazardActionFromMap}
       />
 
-      {/* Floating Action Controls */}
+      {/* Floating Action Controls - Intact and shifted upwards above navigation card when route is active */}
       <ActionButtons
         onLocationPress={handleResetToGps}
         onReportPress={handleReportPress}
-        onRefreshPress={loadWaterlogMarkers}
+        onRefreshPress={() => loadWaterlogMarkers(adminToken)}
         onSosPress={() => setSosVisible(true)}
         locationLoading={locationLoading}
         reportLoading={loading}
@@ -831,19 +988,6 @@ export default function App() {
       {/* Production Google Maps Navigation Sheet */}
       {routeDetails && currentRoute && (
         <View style={styles.navBottomCard}>
-          {/* Active Navigation Simulated Turn Banner */}
-          {isNavigating && (
-            <View style={styles.turnByTurnBanner}>
-              <View style={styles.turnIconWrap}>
-                <MaterialCommunityIcons name="arrow-up-right-bold" size={26} color="#ffffff" />
-              </View>
-              <View style={styles.turnTextWrap}>
-                <Text style={styles.turnTitle}>In 350 meters, keep right</Text>
-                <Text style={styles.turnSub}>Continue along elevated bypass corridor</Text>
-              </View>
-            </View>
-          )}
-
           {/* Main Route Header & ETA */}
           <View style={styles.navCardHeader}>
             <View style={styles.etaContainer}>
@@ -938,7 +1082,7 @@ export default function App() {
                 styles.startNavBtn,
                 isNavigating && styles.stopNavBtn,
               ]}
-              onPress={() => setIsNavigating(!isNavigating)}
+              onPress={handleToggleNavigation}
               activeOpacity={0.85}
             >
               <MaterialIcons
@@ -997,12 +1141,14 @@ export default function App() {
         onLoginSuccess={(token, user) => {
           setAdminToken(token);
           setAdminUser(user);
+          loadWaterlogMarkers(token);
         }}
         onLogout={() => {
           setAdminToken(null);
           setAdminUser(null);
+          loadWaterlogMarkers(null);
         }}
-        onDataChanged={loadWaterlogMarkers}
+        onDataChanged={() => loadWaterlogMarkers(adminToken)}
       />
 
       <MenuDrawer
@@ -1016,8 +1162,8 @@ export default function App() {
         reportCount={activeReports.length}
       />
 
-      {/* Global Toast Component */}
-      <Toast />
+      {/* Global Toast Component - Universally positioned below search bar */}
+      <Toast topOffset={Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 68 : 95} />
     </View>
   );
 }
@@ -1098,6 +1244,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
+  subSearchBarRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
   customStartSubBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -1106,8 +1258,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 16,
-    marginTop: 6,
-    alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: "#a7f3d0",
   },
@@ -1178,36 +1328,6 @@ const styles = StyleSheet.create({
     zIndex: 25,
     borderWidth: 1,
     borderColor: "#f1f5f9",
-  },
-  turnByTurnBanner: {
-    backgroundColor: "#1e293b",
-    borderRadius: 14,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  turnIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#334155",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  turnTextWrap: {
-    flex: 1,
-  },
-  turnTitle: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  turnSub: {
-    color: "#94a3b8",
-    fontSize: 11,
-    marginTop: 1,
   },
   navCardHeader: {
     flexDirection: "row",

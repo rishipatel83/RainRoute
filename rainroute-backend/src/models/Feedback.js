@@ -10,8 +10,8 @@ const feedbackSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['general', 'bug', 'feature_request', 'map_accuracy', 'ui_ux'],
     default: 'general',
+    trim: true,
   },
   message: {
     type: String,

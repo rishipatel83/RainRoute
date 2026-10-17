@@ -1,7 +1,28 @@
 // src/services/apiService.js
+import Constants from 'expo-constants';
 
-// Default backend server base URL for local network testing
-export const DEFAULT_BASE_API_URL = 'http://10.253.158.42:3000/api';
+/**
+ * Dynamically resolves the development machine's IP address.
+ * Expo Go communicates with the dev server via hostUri (e.g. 10.76.19.42:8081).
+ * We extract that IP so the app automatically works across any Wi-Fi network without manual config.
+ */
+const resolveDevHost = () => {
+  try {
+    const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoGo?.debuggerHost;
+    if (hostUri && typeof hostUri === 'string') {
+      const ip = hostUri.split(':')[0];
+      if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
+        return `http://${ip}:3000/api`;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not auto-resolve Expo hostUri:', e);
+  }
+  // Fallback to active verified local IP
+  return 'http://10.76.19.42:3000/api';
+};
+
+export const DEFAULT_BASE_API_URL = resolveDevHost();
 let activeBaseUrl = DEFAULT_BASE_API_URL;
 
 export const setServerUrl = (url) => {
@@ -21,7 +42,7 @@ export const getServerUrl = () => `${activeBaseUrl}/reports`;
 export const getBaseApiUrl = () => activeBaseUrl;
 
 // Helper to perform fetch with a timeout
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 7000) => {
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 12000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -62,7 +83,7 @@ export const saveReportToDatabase = async (latitude, longitude, imageUrl, hazard
           severity: hazardData.severity || 'medium',
         }),
       },
-      8000
+      14000
     );
 
     if (!response.ok) {
@@ -82,7 +103,7 @@ export const saveReportToDatabase = async (latitude, longitude, imageUrl, hazard
  */
 export const fetchActiveReports = async () => {
   try {
-    const response = await fetchWithTimeout(`${activeBaseUrl}/reports`, {}, 5000);
+    const response = await fetchWithTimeout(`${activeBaseUrl}/reports`, {}, 10000);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -106,7 +127,7 @@ export const adminLogin = async (username, password) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       },
-      7000
+      10000
     );
 
     const data = await response.json();
@@ -135,7 +156,7 @@ export const updateReportStatus = async (reportId, status, token) => {
         },
         body: JSON.stringify({ status }),
       },
-      7000
+      10000
     );
 
     const data = await response.json();
@@ -162,7 +183,7 @@ export const deleteReport = async (reportId, token) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      7000
+      10000
     );
 
     const data = await response.json();
@@ -188,7 +209,7 @@ export const fetchAdminReports = async (token) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      7000
+      10000
     );
 
     const data = await response.json();
@@ -214,7 +235,7 @@ export const submitFeedback = async ({ rating, category, message, contactEmail }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, category, message, contactEmail }),
       },
-      7000
+      10000
     );
 
     const data = await response.json();
@@ -229,6 +250,33 @@ export const submitFeedback = async ({ rating, category, message, contactEmail }
 };
 
 /**
+ * Admin: Fetch all community feedback submissions
+ */
+export const fetchAdminFeedbacks = async (token) => {
+  try {
+    const response = await fetchWithTimeout(
+      `${activeBaseUrl}/feedback`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      10000
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch admin feedback');
+    }
+    return data.feedbacks || [];
+  } catch (error) {
+    console.warn('⚠️ Fetch Admin Feedbacks Failed:', error.message || error);
+    return [];
+  }
+};
+
+
+/**
  * Routing via OSRM
  */
 export const getRouteFromOSRM = async (startLat, startLng, destLat, destLng) => {
@@ -239,15 +287,15 @@ export const getRouteFromOSRM = async (startLat, startLng, destLat, destLng) => 
     }
 
     const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson&alternatives=true`;
-    const response = await fetchWithTimeout(url, {}, 8000);
+    const response = await fetchWithTimeout(url, {}, 9000);
     const data = await response.json();
 
     if (data.routes && data.routes.length > 0) {
       const allRoutes = data.routes.map((r, idx) => ({
         id: idx,
         coordinates: r.geometry.coordinates,
-        distance: r.distance, // in meters
-        duration: r.duration, // in seconds
+        distance: r.distance,
+        duration: r.duration,
       }));
 
       const result = {
@@ -284,7 +332,7 @@ export const getDetourRoute = async (startLat, startLng, destLat, destLng, hazar
     const detourLng = hazardLng + (dLat / len) * offsetMagnitude;
 
     const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${detourLng.toFixed(5)},${detourLat.toFixed(5)};${destLng},${destLat}?overview=full&geometries=geojson`;
-    const response = await fetchWithTimeout(url, {}, 8000);
+    const response = await fetchWithTimeout(url, {}, 9000);
     const data = await response.json();
 
     if (data.routes && data.routes.length > 0) {
@@ -328,7 +376,7 @@ export const searchLocation = async (query, userCoords = null) => {
           'User-Agent': 'RainRouteNavigation/2.0',
         },
       },
-      6000
+      8000
     );
     const data = await response.json();
 
