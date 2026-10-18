@@ -2,23 +2,30 @@
   "expo": {
     "name": "RainRoute",
     "slug": "rainroute",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0b1120"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rainroute.app"
     },
     "android": {
+      "package": "com.rainroute.app",
       "adaptiveIcon": {
         "backgroundColor": "#0b1120",
         "foregroundImage": "./assets/android-icon-foreground.png"
-      }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

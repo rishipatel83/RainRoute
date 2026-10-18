@@ -50,6 +50,7 @@ import {
   searchLocation,
   updateReportStatus,
   deleteReport,
+  probeServerHealth,
 } from "./src/services/apiService";
 
 export default function App() {
@@ -93,9 +94,13 @@ export default function App() {
   const mapReadyRef = useRef(false);
   const searchTimeoutRef = useRef(null);
   const locationWatcherRef = useRef(null);
+  const initialRetryDoneRef = useRef(false);
 
-  // Cleanup location watcher on unmount
+  // Cleanup location watcher on unmount and warmup deployed backend
   useEffect(() => {
+    // Silently probe deployed Render backend to wake up sleeping instance immediately
+    probeServerHealth();
+
     return () => {
       if (locationWatcherRef.current) {
         locationWatcherRef.current.remove();
@@ -132,7 +137,17 @@ export default function App() {
   const loadWaterlogMarkers = async (tokenOverride = undefined) => {
     try {
       const reports = await fetchActiveReports();
-      setActiveReports(reports);
+      setActiveReports(reports || []);
+
+      // If initial fetch returned empty array (typical during backend container spin-up), retry once after 8 seconds
+      if (!initialRetryDoneRef.current && (!reports || reports.length === 0)) {
+        initialRetryDoneRef.current = true;
+        setTimeout(() => {
+          if (mapReadyRef.current) {
+            loadWaterlogMarkers(adminToken);
+          }
+        }, 8000);
+      }
 
       if (!webViewRef.current) return;
 

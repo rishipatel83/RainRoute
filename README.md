@@ -2,6 +2,10 @@
 
 <div align="center">
 
+<p align="center">
+  <img src="docs/logo.png" alt="RainRoute Logo" width="120" />
+</p>
+
 [![React Native](https://img.shields.io/badge/React_Native-v0.76-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-SDK_52-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express_v5-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -217,7 +221,9 @@ flowchart LR
 
 ## 📡 REST API Reference
 
-Base Endpoint: `http://<SERVER_HOST>:3000/api`
+* **Live Production Base URL**: `https://rainroute.onrender.com/api`
+* **Local Development Base URL**: `http://<SERVER_HOST>:3000/api`
+* **System Health & Keep-Alive**: `GET https://rainroute.onrender.com/health`
 
 ### 1. Public Commuter Endpoints (No Authentication Required)
 
@@ -361,16 +367,20 @@ RainRoute is engineered to be deployed as a public production application comple
    * `JWT_SECRET`: A secure cryptographically random string.
    * `ADMIN_USER`: `admin`
    * `ADMIN_PASSWORD`: Your chosen admin password.
-5. Click **Deploy Web Service**. Render provisions a secure production HTTPS endpoint: `https://rainroute-backend.onrender.com`.
+5. Click **Deploy Web Service**. Render provisions a secure production HTTPS endpoint: `https://rainroute.onrender.com`.
 
 ---
 
 ### 2. Connect Mobile Frontend to Production Backend
-1. Open [rainroute/src/services/apiService.js](file:///d:/CODES/RainRoute/rainroute/src/services/apiService.js).
-2. Set your production Render URL as the default fallback:
-   ```javascript
-   export const DEFAULT_BASE_API_URL = 'https://rainroute-backend.onrender.com/api';
-   ```
+The mobile frontend in `rainroute` is pre-configured to communicate seamlessly with the live production deployment:
+```javascript
+export const PRODUCTION_BASE_API_URL = 'https://rainroute.onrender.com/api';
+export const DEFAULT_BASE_API_URL = PRODUCTION_BASE_API_URL;
+```
+If you ever want to switch back to a local backend instance during offline development:
+```javascript
+import { switchToLocalServer, switchToProductionServer } from './src/services/apiService';
+```
 
 ---
 

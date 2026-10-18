@@ -2,9 +2,14 @@
 import Constants from 'expo-constants';
 
 /**
+ * Production Backend deployed on Render
+ */
+export const PRODUCTION_BASE_API_URL = 'https://rainroute.onrender.com/api';
+
+/**
  * Dynamically resolves the development machine's IP address.
  * Expo Go communicates with the dev server via hostUri (e.g. 10.76.19.42:8081).
- * We extract that IP so the app automatically works across any Wi-Fi network without manual config.
+ * We extract that IP so developers can test locally if running a local backend.
  */
 const resolveDevHost = () => {
   try {
@@ -22,7 +27,10 @@ const resolveDevHost = () => {
   return 'http://10.76.19.42:3000/api';
 };
 
-export const DEFAULT_BASE_API_URL = resolveDevHost();
+export const LOCAL_DEV_API_URL = resolveDevHost();
+
+// Default to the live production server hosted on Render for seamless connectivity
+export const DEFAULT_BASE_API_URL = PRODUCTION_BASE_API_URL;
 let activeBaseUrl = DEFAULT_BASE_API_URL;
 
 export const setServerUrl = (url) => {
@@ -38,11 +46,19 @@ export const setServerUrl = (url) => {
   }
 };
 
+export const switchToProductionServer = () => {
+  activeBaseUrl = PRODUCTION_BASE_API_URL;
+};
+
+export const switchToLocalServer = () => {
+  activeBaseUrl = LOCAL_DEV_API_URL;
+};
+
 export const getServerUrl = () => `${activeBaseUrl}/reports`;
 export const getBaseApiUrl = () => activeBaseUrl;
 
-// Helper to perform fetch with a timeout
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 12000) => {
+// Helper to perform fetch with a timeout (default 25s to handle Render free-tier cold starts)
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 25000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -55,6 +71,25 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 12000) => {
   } catch (err) {
     clearTimeout(id);
     throw err;
+  }
+};
+
+/**
+ * Health check / warmup probe
+ * Silently pings the Render backend /health endpoint to awaken the server on app launch.
+ */
+export const probeServerHealth = async () => {
+  try {
+    const rootUrl = activeBaseUrl.replace(/\/api\/?$/, '');
+    const response = await fetchWithTimeout(`${rootUrl}/health`, {}, 30000);
+    if (response.ok) {
+      const data = await response.json();
+      return { online: true, ...data };
+    }
+    return { online: false, status: response.status };
+  } catch (e) {
+    // In background; do not throw to avoid disrupting user experience
+    return { online: false, error: e.message };
   }
 };
 
@@ -83,7 +118,7 @@ export const saveReportToDatabase = async (latitude, longitude, imageUrl, hazard
           severity: hazardData.severity || 'medium',
         }),
       },
-      14000
+      25000
     );
 
     if (!response.ok) {
@@ -103,7 +138,7 @@ export const saveReportToDatabase = async (latitude, longitude, imageUrl, hazard
  */
 export const fetchActiveReports = async () => {
   try {
-    const response = await fetchWithTimeout(`${activeBaseUrl}/reports`, {}, 10000);
+    const response = await fetchWithTimeout(`${activeBaseUrl}/reports`, {}, 25000);
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
@@ -127,7 +162,7 @@ export const adminLogin = async (username, password) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       },
-      10000
+      25000
     );
 
     const data = await response.json();
@@ -156,7 +191,7 @@ export const updateReportStatus = async (reportId, status, token) => {
         },
         body: JSON.stringify({ status }),
       },
-      10000
+      25000
     );
 
     const data = await response.json();
@@ -183,7 +218,7 @@ export const deleteReport = async (reportId, token) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      10000
+      25000
     );
 
     const data = await response.json();
@@ -209,7 +244,7 @@ export const fetchAdminReports = async (token) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      10000
+      25000
     );
 
     const data = await response.json();
@@ -235,7 +270,7 @@ export const submitFeedback = async ({ rating, category, message, contactEmail }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, category, message, contactEmail }),
       },
-      10000
+      25000
     );
 
     const data = await response.json();
@@ -261,7 +296,7 @@ export const fetchAdminFeedbacks = async (token) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      10000
+      25000
     );
 
     const data = await response.json();
