@@ -3,24 +3,53 @@
 <div align="center">
 
 <p align="center">
-  <img src="docs/logo.png" alt="RainRoute Logo" width="120" />
+  <a href="https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0" title="Click to view v1.1.0 Release and Download APK">
+    <img src="docs/logo.png" alt="RainRoute App Logo" width="130" />
+  </a>
 </p>
 
-[![React Native](https://img.shields.io/badge/React_Native-v0.76-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-SDK_52-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express_v5-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas_TTL_Cache-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Leaflet](https://img.shields.io/badge/Leaflet-v1.9.4-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Open-Meteo](https://img.shields.io/badge/Open--Meteo-Live_Weather_API-FF8800?style=for-the-badge&logo=weather&logoColor=white)](https://open-meteo.com/)
-[![Cloudinary](https://img.shields.io/badge/Cloudinary-Media_CDN-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Download APK](https://img.shields.io/badge/Download_APK-v1.1.0_Release-3b82f6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
+### 🚀 [RainRoute v1.1.0 Official Production Release](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
 
-**A full-stack, crowd-powered mobile navigation engine designed to combat urban waterlogging, unmapped potholes, and monsoon commuting hazards in real-time.**
+<p>
+  <a href="https://github.com/rishipatel83/RainRoute/releases/download/v1.1.0/RainRoute-v1.1.0.apk">
+    <img src="https://img.shields.io/badge/📥_Download_Android_APK-v1.1.0-2563eb?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+  <a href="https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0">
+    <img src="https://img.shields.io/badge/🏷️_Release_Notes-v1.1.0-0ea5e9?style=for-the-badge&logo=github&logoColor=white" alt="Release Page" />
+  </a>
+  <a href="https://github.com/rishipatel83/RainRoute/archive/refs/tags/v1.1.0.zip">
+    <img src="https://img.shields.io/badge/📦_Source_Code-(.zip)-475569?style=for-the-badge&logo=archive&logoColor=white" alt="Download Source ZIP" />
+  </a>
+  <a href="https://expo.dev/accounts/rishipatel83/projects/rainroute/builds/da0d6166-8021-45f4-bf20-748b830a8eb9">
+    <img src="https://img.shields.io/badge/☁️_Verified_EAS_Build-Expo_Cloud-000020?style=for-the-badge&logo=expo&logoColor=white" alt="EAS Cloud Build" />
+  </a>
+</p>
 
-[📲 Download APK](#-download--install-apk) • [Explore Features](#-key-features) • [System Architecture](#-system-architecture) • [Interactive Workflows](#-interactive-system-workflows) • [Tech Stack](#-technical-stack) • [REST API](#-rest-api-reference) • [Quick Start](#-quick-start--installation) • [Free Deployment](#-production-deployment-guide-100-free)
+<p>
+  <img src="https://img.shields.io/badge/React_Native-v0.76-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/Expo-SDK_52-000020?style=flat-square&logo=expo&logoColor=white" />
+  <img src="https://img.shields.io/badge/Node.js-Express_v5-339933?style=flat-square&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/MongoDB-Atlas_TTL_Cache-47A248?style=flat-square&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/Leaflet-v1.9.4-199900?style=flat-square&logo=leaflet&logoColor=white" />
+  <img src="https://img.shields.io/badge/Open--Meteo-Live_Weather_API-FF8800?style=flat-square&logo=weather&logoColor=white" />
+  <img src="https://img.shields.io/badge/Cloudinary-Media_CDN-3448C5?style=flat-square&logo=cloudinary&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" />
+</p>
+
+<p><strong>A full-stack, crowd-powered mobile navigation engine designed to combat urban waterlogging, unmapped potholes, and monsoon commuting hazards in real-time.</strong></p>
 
 </div>
+
+---
+
+### 🧭 Repository Directory
+
+| 📱 **Commuters & End Users** | 🏗️ **Architecture & Engineering** | 🛠️ **Developers & Operations** |
+| :--- | :--- | :--- |
+| • [📥 Download & Install APK](#-download--install-apk-android) | • [🏗️ System Architecture](#-system-architecture) | • [🛠️ Technical Stack](#-technical-stack) |
+| • [🗺️ Commuter User Manual](#-commuter-quick-start-manual-60-seconds) | • [🔄 End-to-End Data Pipeline](#-end-to-end-data-pipeline) | • [📡 REST API Reference](#-rest-api-reference) |
+| • [✨ Full Feature Breakdown](#-key-features) | • [🔁 Interactive Workflows](#-interactive-system-workflows) | • [🚀 Local Development Setup](#-quick-start--installation) |
+| • [🚨 Emergency SOS Protocols](#-emergency-sos--monsoon-safety-protocols) | • [🛡️ Role-Based Access Control](#-role-based-access-control-rbac--municipal-moderation) | • [🌐 Free Cloud Deployment](#-production-deployment-guide-100-free) |
 
 ---
 
@@ -35,16 +64,54 @@
 
 ---
 
-## 📲 Download & Install APK
+## 📲 Download & Install APK (Android)
 
-Directly install and test the production-ready Android build of RainRoute:
+RainRoute is distributed as a pre-compiled, universal standalone Android APK (`arm64-v8a`, `armeabi-v7a`, `x86_64`) ready to run on any physical Android device without needing Expo or developer tooling.
 
-* 📦 **Direct APK Download**: [**Download RainRoute v1.1.0 (.apk)**](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
-* ☁️ **Verified EAS Cloud Build**: [View Expo Build Artifact](https://expo.dev/accounts/rishipatel83/projects/rainroute/builds/da0d6166-8021-45f4-bf20-748b830a8eb9)
-* 📱 **System Compatibility**: Android 10, 11, 12, 13, 14, 15+ (Universal APK, ARM64 & x86_64)
+### 📥 Release Downloads (v1.1.0)
 
-> [!TIP]
-> **Android Installation Note**: Since this APK is signed for direct distribution outside the Google Play Store, Android will display a standard *"Install unknown apps"* prompt. Tap **Settings** > **Allow from this source** to proceed with the 1-tap installation.
+| Package Asset | Format | Direct Download Link | Description |
+| :--- | :---: | :--- | :--- |
+| **RainRoute Universal APK** | `.apk` | [**Download RainRoute-v1.1.0.apk**](https://github.com/rishipatel83/RainRoute/releases/download/v1.1.0/RainRoute-v1.1.0.apk) | Standalone installable binary for Android 10 to 15+ |
+| **GitHub Release Page** | Web | [**View Release v1.1.0 Notes**](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0) | Full release notes, changelog & assets on GitHub |
+| **Source Code (ZIP)** | `.zip` | [**Download Source Code (.zip)**](https://github.com/rishipatel83/RainRoute/archive/refs/tags/v1.1.0.zip) | Complete source bundle including backend and frontend |
+| **Source Code (TAR)** | `.tar.gz` | [**Download Source Code (.tar.gz)**](https://github.com/rishipatel83/RainRoute/archive/refs/tags/v1.1.0.tar.gz) | Compressed source tarball |
+| **Verified Cloud Build** | EAS | [**View Expo Build Artifact**](https://expo.dev/accounts/rishipatel83/projects/rainroute/builds/da0d6166-8021-45f4-bf20-748b830a8eb9) | Cloud compilation logs and integrity verification |
+
+---
+
+### 📱 3-Step Installation Guide for Everyday Users
+
+Follow these simple steps to install RainRoute on your Android phone in under a minute:
+
+1. **Step 1: Download the File**  
+   Tap [**Download RainRoute-v1.1.0.apk**](https://github.com/rishipatel83/RainRoute/releases/download/v1.1.0/RainRoute-v1.1.0.apk) on your phone. If your browser asks *"File might be harmful"*, tap **Download anyway** (standard Android security prompt for APKs downloaded from web browsers).
+2. **Step 2: Open and Authorize Installation**  
+   Tap the download notification or open your phone's **Files / Downloads** folder and tap `RainRoute-v1.1.0.apk`.
+   * If Android prompts **"For your security, your phone is not allowed to install unknown apps from this source"**:
+     - Tap **Settings** on the prompt.
+     - Toggle the switch **"Allow from this source"** to **ON**.
+     - Tap the **Back** arrow and tap **Install**.
+3. **Step 3: Launch and Grant Permissions**  
+   Open **RainRoute** from your home screen:
+   * **Location Permission**: Select *"While using the app"* so the map centers on your vehicle and displays local flood risks.
+   * **Camera Permission**: Select *"Allow"* so you can snap and report live road hazards to help fellow commuters.
+
+> [!NOTE]
+> **Why does Android show the "Unknown apps" prompt?**  
+> Because RainRoute is published directly on GitHub as an open-source project instead of through Google Play Store billing. The APK is built and signed with an official Android Keystore generated via Expo Application Services (EAS), contains zero ads, requires no tracking, and connects directly to our secure HTTPS backend.
+
+---
+
+### 🧭 Commuter Quick-Start Manual (60 Seconds)
+
+Once installed, here is how you can use RainRoute immediately:
+
+* 🚗 **Navigate Safe Routes**: Type your destination in the top floating search bar. RainRoute calculates your route via OSRM and checks a **50m proximity buffer** against known waterlogged zones. If a flood is detected, it recommends a **Safe Detour** bypassing the bottleneck!
+* 📸 **Report Road Hazards**: If you spot an unmapped flood, open pothole, or fallen tree, tap the floating red **"Report Hazard"** button. Take a photo, pick the hazard category, optionally add a note, and tap **Submit**. It appears immediately on the live map for all commuters!
+* 🌦️ **Check Road Weather**: Tap the floating weather pill in the bottom corner. It shows real-time rainfall intensity (mm), humidity, wind, and a road safety meter (**Safe / Moderate / High Risk**).
+* 🚨 **Emergency SOS**: Tap the red **SOS** dock icon for 1-tap phone dials to **Police (112)** or **Disaster Control (1077)**, or 1-tap broadcast your live GPS distress coordinates via WhatsApp or SMS.
+* 🛡️ **Municipal Admin Access**: Municipal workers can open the drawer menu, select **Admin Portal** (Username: `admin`, Password: `admin123`), and mark fixed hazards as resolved or delete invalid reports in real time!
 
 ---
 
@@ -419,10 +486,10 @@ eas build -p android --profile preview
 ---
 
 ### 4. Global Distribution via GitHub Releases
-1. In your GitHub repository, navigate to **Releases** > **Draft a new release**.
-2. Tag your release (e.g., `v1.0.0`).
-3. Upload the compiled `RainRoute.apk` file as a binary asset.
-4. Any commuter globally can download, install, and run the app directly on their mobile device.
+RainRoute is published and distributed globally via GitHub Releases:
+* 🏷️ **Official Release**: [**RainRoute v1.1.0 on GitHub**](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
+* 📦 **Direct APK Download**: [**RainRoute-v1.1.0.apk**](https://github.com/rishipatel83/RainRoute/releases/download/v1.1.0/RainRoute-v1.1.0.apk)
+* 📱 Any commuter globally can download, install, and run the app directly on their Android device without third-party app store accounts.
 
 ---
 
