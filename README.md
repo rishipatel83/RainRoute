@@ -14,10 +14,11 @@
 [![Open-Meteo](https://img.shields.io/badge/Open--Meteo-Live_Weather_API-FF8800?style=for-the-badge&logo=weather&logoColor=white)](https://open-meteo.com/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-Media_CDN-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Download APK](https://img.shields.io/badge/Download_APK-v1.1.0_Release-3b82f6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
 
 **A full-stack, crowd-powered mobile navigation engine designed to combat urban waterlogging, unmapped potholes, and monsoon commuting hazards in real-time.**
 
-[Explore Features](#-key-features) • [System Architecture](#-system-architecture) • [Interactive Workflows](#-interactive-system-workflows) • [Tech Stack](#-technical-stack) • [REST API](#-rest-api-reference) • [Quick Start](#-quick-start--installation) • [Free Deployment](#-production-deployment-guide-100-free)
+[📲 Download APK](#-download--install-apk) • [Explore Features](#-key-features) • [System Architecture](#-system-architecture) • [Interactive Workflows](#-interactive-system-workflows) • [Tech Stack](#-technical-stack) • [REST API](#-rest-api-reference) • [Quick Start](#-quick-start--installation) • [Free Deployment](#-production-deployment-guide-100-free)
 
 </div>
 
@@ -31,6 +32,19 @@
 | **The Solution** | **RainRoute** delivers a unified, crowdsourced monsoon navigation platform featuring **real-time photo-verified hazard reporting**, **proactive path collision detection**, **automated flood-bypass detours**, **live hardware GPS tracking**, and **day/night meteorological weather telemetry**. |
 | **Architectural Highlights** | **Role-Based Access Control (RBAC)** via JWT tokens, **50m spatial hazard geofencing**, **self-purging 6-hour TTL database indexes**, **zero-cost Leaflet vector mapping inside native WebView**, and **instant reactive DOM re-rendering** for administrative moderation without app restarts. |
 | **Zero-Cost Production Stack** | **Frontend:** React Native (Expo SDK 52) • **Backend:** Node.js (Express v5) • **Database:** MongoDB Atlas • **Telemetry:** Open-Meteo API • **Media CDN:** Cloudinary |
+
+---
+
+## 📲 Download & Install APK
+
+Directly install and test the production-ready Android build of RainRoute:
+
+* 📦 **Direct APK Download**: [**Download RainRoute v1.1.0 (.apk)**](https://github.com/rishipatel83/RainRoute/releases/tag/v1.1.0)
+* ☁️ **Verified EAS Cloud Build**: [View Expo Build Artifact](https://expo.dev/accounts/rishipatel83/projects/rainroute/builds/da0d6166-8021-45f4-bf20-748b830a8eb9)
+* 📱 **System Compatibility**: Android 10, 11, 12, 13, 14, 15+ (Universal APK, ARM64 & x86_64)
+
+> [!TIP]
+> **Android Installation Note**: Since this APK is signed for direct distribution outside the Google Play Store, Android will display a standard *"Install unknown apps"* prompt. Tap **Settings** > **Allow from this source** to proceed with the 1-tap installation.
 
 ---
 
